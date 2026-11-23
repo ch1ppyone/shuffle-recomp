@@ -33,8 +33,6 @@ layout. Saves and settings are stored locally on each device.
 
 ## Screenshots
 
-### Launcher
-
 <table>
   <thead>
     <tr>
@@ -48,47 +46,41 @@ layout. Saves and settings are stored locally on each device.
         <a href="docs/images/launcher-desktop.png">
           <img src="docs/images/launcher-desktop.png" alt="macOS and Windows launcher" width="520">
         </a>
-        <br><strong>Desktop launcher</strong>
+        <br><strong>Launcher</strong>
       </td>
       <td align="center">
         <a href="docs/images/launcher-android.png">
           <img src="docs/images/launcher-android.png" alt="Android launcher" width="320">
         </a>
-        <br><strong>Android launcher</strong>
+        <br><strong>Launcher</strong>
       </td>
     </tr>
-  </tbody>
-</table>
-
-### In game
-
-<table>
-  <thead>
-    <tr>
-      <th align="center">macOS</th>
-      <th align="center">Windows</th>
-      <th align="center">Android</th>
-    </tr>
-  </thead>
-  <tbody>
     <tr>
       <td align="center">
-        <a href="docs/images/game-macos.png">
-          <img src="docs/images/game-macos.png" alt="macOS gameplay" width="360">
+        <a href="docs/images/menu-desktop.png">
+          <img src="docs/images/menu-desktop.png" alt="macOS and Windows main menu" width="520">
         </a>
-        <br><strong>macOS gameplay</strong>
+        <br><strong>Main menu</strong>
       </td>
       <td align="center">
-        <a href="docs/images/game-windows.png">
-          <img src="docs/images/game-windows.png" alt="Windows gameplay" width="360">
+        <a href="docs/images/menu-android.png">
+          <img src="docs/images/menu-android.png" alt="Android main menu" width="320">
         </a>
-        <br><strong>Windows gameplay</strong>
+        <br><strong>Main menu</strong>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <a href="docs/images/game-desktop.png">
+          <img src="docs/images/game-desktop.png" alt="macOS and Windows gameplay" width="520">
+        </a>
+        <br><strong>In game</strong>
       </td>
       <td align="center">
         <a href="docs/images/game-android.png">
           <img src="docs/images/game-android.png" alt="Android gameplay" width="360">
         </a>
-        <br><strong>Android gameplay</strong>
+        <br><strong>In game</strong>
       </td>
     </tr>
   </tbody>
