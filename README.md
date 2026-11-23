@@ -30,10 +30,28 @@ python3 -m pip install -r launcher/requirements.txt
 python3 launcher/launcher.py
 ```
 
-The same PyQt6 launcher is used on macOS, Windows and Linux. On macOS you can also open
-`launcher/SonicShuffle.command`; Linux and Windows have equivalent scripts in `launcher/`.
+The same PyQt6 launcher is used on macOS, Windows and Linux. To create a release bundle,
+run the platform-specific `scripts/package-launcher-*` script. It produces a macOS `.app`,
+a Windows launcher executable, or a Linux executable bundle with the native game beside it.
 Choose the original disc image in the launcher and press **Launch Game**. The in-game
 framework frontend is disabled, so **Esc** does not open a hidden settings overlay.
+
+The launcher icon is the project card mark: a white **S** inside a blue playing-card square.
+`launcher/icon.svg` is the source artwork; `scripts/make-icons.py` generates the PNG, ICO and
+ICNS variants used by desktop releases.
+
+The launcher file picker accepts CHD, GDI, CDI and CUE images. CHD, GDI and CUE are read
+directly by the native runtime. CDI images are converted at launch with the bundled `cdirip`
+helper into a temporary CUE/GDI-compatible track set; the temporary files are deleted when
+the game exits. CDI support requires packaging a platform-native `cdirip` executable:
+
+```sh
+python3 launcher/package.py --game build-macos/game/sonic-shuffle-recomp \
+  --cdirip /path/to/cdirip --output release
+```
+
+`cdirip` is GPL-2.0 software by DeXT/Lawrence Williams. Its source and license must accompany
+any release containing its executable.
 
 ## Other platforms
 

@@ -11,6 +11,8 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
+import threading
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
@@ -33,6 +35,12 @@ from PyQt6.QtWidgets import (
 
 
 def root_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        executable = Path(sys.executable).resolve()
+        # macOS .app: SonicShuffle.app/Contents/MacOS/launcher
+        if executable.parent.name == "MacOS" and executable.parent.parent.name == "Contents":
+            return executable.parent.parent / "Resources"
+        return executable.parent
     return Path(__file__).resolve().parent.parent
 
 
@@ -74,6 +82,11 @@ class LauncherModel:
     @staticmethod
     def executable() -> Path | None:
         name = "sonic-shuffle-recomp.exe" if os.name == "nt" else "sonic-shuffle-recomp"
+        if getattr(sys, "frozen", False):
+            frozen_root = root_dir()
+            bundled = frozen_root / "game" / name
+            if bundled.is_file():
+                return bundled
         candidates = (
             root_dir() / "build" / "game" / name,
             root_dir() / "build-macos" / "game" / name,
@@ -83,24 +96,66 @@ class LauncherModel:
         )
         return next((candidate for candidate in candidates if candidate.is_file()), None)
 
-    def launch(self, image: Path, scale: int) -> None:
+    @staticmethod
+    def cdirip() -> Path | None:
+        name = "cdirip.exe" if os.name == "nt" else "cdirip"
+        candidates = [root_dir() / "tools" / name, root_dir() / name]
+        if getattr(sys, "frozen", False):
+            candidates.insert(0, Path(sys.executable).resolve().parent / name)
+        return next((candidate for candidate in candidates if candidate.is_file()), None)
+
+    @classmethod
+    def prepare_disc(cls, image: Path) -> tuple[Path, Path | None]:
+        """Return a runtime-readable image and an optional temporary directory."""
+        if image.suffix.lower() != ".cdi":
+            return image, None
+        converter = cls.cdirip()
+        if converter is None:
+            raise FileNotFoundError("CDI support is missing: cdirip was not bundled.")
+        temporary = Path(tempfile.mkdtemp(prefix="sonic-shuffle-cdi-"))
+        try:
+            subprocess.run(
+                [str(converter), str(image), str(temporary), "-bin", "-full"],
+                check=True,
+                cwd=str(temporary),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            cue = temporary / "tdisc.cue"
+            if not cue.is_file():
+                raise RuntimeError("CDI conversion did not produce TDisc.cue.")
+            return cue, temporary
+        except Exception:
+            import shutil
+            shutil.rmtree(temporary, ignore_errors=True)
+            raise
+
+    def launch(self, image: Path, scale: int) -> tuple[subprocess.Popen, Path | None]:
         executable = self.executable()
         if executable is None:
             raise FileNotFoundError("Build the port before launching the game.")
+        runtime_image, temporary = self.prepare_disc(image)
         self.save(str(image), scale)
-        subprocess.Popen(
+        process = subprocess.Popen(
             [
                 str(executable),
                 "--config",
-                str(root_dir() / "game/sonicshuffle.toml"),
+                str(root_dir() / "game" / "sonicshuffle.toml"),
                 "--disc",
-                str(image),
+                str(runtime_image),
                 "--window",
                 "--scale",
                 str(scale),
             ],
             cwd=str(root_dir()),
         )
+        if temporary is not None:
+            threading.Thread(
+                target=lambda: (process.wait(), __import__("shutil").rmtree(temporary, ignore_errors=True)),
+                daemon=True,
+            ).start()
+        return process, temporary
 
 
 class ImageCheckWorker(QObject):
@@ -152,7 +207,7 @@ class LauncherWindow(QMainWindow):
 
         title = QLabel("SONIC SHUFFLE")
         title.setObjectName("title")
-        title.setFont(QFont(" sans-serif", 28, QFont.Weight.Bold))
+        title.setFont(QFont("Sans Serif", 28, QFont.Weight.Bold))
         outer.addWidget(title)
         subtitle = QLabel("RECOMPILED NATIVE PORT")
         subtitle.setObjectName("subtitle")
@@ -171,7 +226,7 @@ class LauncherWindow(QMainWindow):
         row = QHBoxLayout()
         row.setSpacing(10)
         self.disc_edit = QLineEdit()
-        self.disc_edit.setPlaceholderText("Select a CHD, GDI, or CUE image…")
+        self.disc_edit.setPlaceholderText("Select a CHD, GDI, or CDI image…")
         self.disc_edit.textChanged.connect(self._on_disc_changed)
         row.addWidget(self.disc_edit, 1)
         browse = QPushButton("Browse…")
@@ -234,7 +289,7 @@ class LauncherWindow(QMainWindow):
             self,
             "Select original Sonic Shuffle disc image",
             "",
-            "Dreamcast images (*.chd *.gdi *.cue);;All files (*)",
+            "Dreamcast images (*.chd *.gdi *.cdi *.cue);;All files (*)",
         )
         if path:
             self.disc_edit.setText(path)
@@ -279,9 +334,13 @@ class LauncherWindow(QMainWindow):
         if not self.image_ready:
             return
         try:
-            self.model.launch(Path(self.disc_edit.text()).expanduser(), int(self.scale_box.currentText()))
+            image = Path(self.disc_edit.text()).expanduser()
+            self.launch_button.setEnabled(False)
+            self.status.setText("Preparing disc image…" if image.suffix.lower() == ".cdi" else "Launching game…")
+            self.model.launch(image, int(self.scale_box.currentText()))
             self.close()
-        except (FileNotFoundError, OSError) as exc:
+        except (FileNotFoundError, OSError, RuntimeError, subprocess.CalledProcessError) as exc:
+            self.launch_button.setEnabled(True)
             QMessageBox.critical(self, "Could not launch game", str(exc))
 
 
