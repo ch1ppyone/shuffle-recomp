@@ -1,12 +1,14 @@
-# Sonic Shuffle — Recompiled
-
-![Sonic Shuffle Recompiled](docs/images/logo.png)
-
-**Sonic Shuffle recompiled for macOS Apple Silicon, Windows x64 and Android arm64.**
-
-[![Status: experimental](https://img.shields.io/badge/status-experimental-a61930?style=flat-square)](#supported-platforms)
-[![Game data: not included](https://img.shields.io/badge/game_data-not_included-252529?style=flat-square)](#legal)
-[![License: GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-252529?style=flat-square)](LICENSE)
+<div align="center">
+  <h1>Sonic Shuffle — Recompiled</h1>
+  <p><img src="docs/images/logo.png" alt="Sonic Shuffle Recompiled" width="520"></p>
+  <p><strong>Sonic Shuffle recompiled for macOS Apple Silicon, Windows x64 and Android arm64.</strong></p>
+  <p>
+    <a href="#supported-platforms"><img src="https://img.shields.io/badge/status-experimental-a61930?style=flat-square" alt="Status: experimental"></a>
+    <a href="#supported-platforms"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Android-252529?style=flat-square" alt="Platforms: macOS, Windows, Linux and Android"></a>
+    <a href="#legal"><img src="https://img.shields.io/badge/game_data-not_included-252529?style=flat-square" alt="Game data: not included"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--2.0-252529?style=flat-square" alt="License: GPL-2.0"></a>
+  </p>
+</div>
 
 [Supported platforms](#supported-platforms) · [Screenshots](#screenshots) · [What you need](#what-you-need) · [macOS](#macos) · [Windows](#windows) · [Android](#android) · [How it works](#how-it-works) · [FAQ](#faq)
 
