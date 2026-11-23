@@ -41,8 +41,7 @@ dest = 0x8C500000
 overlay = true
 # The overlay's first word is a pointer to 0x8C500214, and a call from 0x0C09400E reaches it at
 # frame 119 of the boot scenario. Discovery did not follow the header pointer.
-# 0x0C500020 is the debug-row name getter (it copies the nine-entry name table and indexes it by
-# the player's character id). Seed it so the ninth-id override can hook it.
+# 0x0C500020 is an overlay entry reached by the retail title flow.
 entries = [0x0C500214, 0x0C500020]
 
 [[relocations]]
@@ -91,7 +90,7 @@ entries = [0x0C500838]
 
 # VS mode overlays. START SELECT loads DUEL/BATTLE into the shared 0x8C500000 slot; keep them
 # separate from TITLE/TRAP so their character-selection code can be translated and patched without
-# changing the development menu or the original eight-character data.
+# keeping the retail character data independent from the title overlay.
 [[relocations]]
 file = "../extracted/disc/fs/SUBPROG/DUEL.BIN"
 dest = 0x8C500000
@@ -109,7 +108,7 @@ file = "../extracted/disc/fs/SUBPROG/MAPSTART.BIN"
 dest = 0x8C600000
 overlay = true
 
-# Minigames, loaded by the TITLE development menu into the 0x8C500000 slot. Each file's first word is
+# Minigames loaded by the retail title flow into the 0x8C500000 slot. Each file's first word is
 # the entry the loader calls; discovery follows calls from there. These three are the first batch:
 # GENERAL 17 (MG030), SPECIAL 4 (SMG32), CLEAR 1 (CMG11).
 [[relocations]]

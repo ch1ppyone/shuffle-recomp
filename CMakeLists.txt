@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 project(shuffle_recomp VERSION 0.1.0 LANGUAGES C CXX)
 
+# The project has its own desktop launcher. The framework's pre-game frontend and in-game
+# Escape overlay stay disabled, so Escape never opens a hidden framework menu.
+set(DREAMCOMP_FRONTEND OFF CACHE BOOL "Use the project launcher instead of dreamcomp frontend" FORCE)
+
 set(DREAMCOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dreamcomp" CACHE PATH "dreamcomp checkout")
 if(NOT EXISTS "${DREAMCOMP_DIR}/cmake/DreamcompPort.cmake")
   message(FATAL_ERROR "dreamcomp not found at ${DREAMCOMP_DIR}")
