@@ -26,9 +26,14 @@ python3 dreamcomp/tools/dc.py setup . --disc "/path/to/Sonic Shuffle.chd"
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DDREAM_RENDERER=ON -DDREAMCOMP_FRONTEND=OFF
 cmake --build build --parallel
-build/game/sonic-shuffle-recomp --config game/sonicshuffle.toml \
-  --disc "/path/to/Sonic Shuffle.chd" --window
+python3 -m pip install -r launcher/requirements.txt
+python3 launcher/launcher.py
 ```
+
+The same PyQt6 launcher is used on macOS, Windows and Linux. On macOS you can also open
+`launcher/SonicShuffle.command`; Linux and Windows have equivalent scripts in `launcher/`.
+Choose the original disc image in the launcher and press **Launch Game**. The in-game
+framework frontend is disabled, so **Esc** does not open a hidden settings overlay.
 
 ## Other platforms
 
