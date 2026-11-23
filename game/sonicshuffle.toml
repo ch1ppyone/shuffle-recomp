@@ -406,17 +406,6 @@ dest = 0x8C500000
 overlay = true
 entries = [0x0C50124C]
 
-[hooks]
-0x0C08D618 = "glyphadvance"
-0x0C08DCCC = "glyphcache"
-0x0C08DE14 = "glyphmap"
-0x0C08486E = "char_data_load@entry"
-0x0C096A6E = "char_available@entry"
-0x0C0A625C = "sprite_create@entry"
-0x0C0A8460 = "roster_resource@entry"
-0x0C0A7CAC = "sprite_pattern@entry"
-
-
 [functions]
 pointers = true
 sweep = true
