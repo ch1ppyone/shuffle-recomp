@@ -81,11 +81,9 @@ public class MainActivity extends Activity {
 
         sConfig = new File(sData, "game/sonicshuffle.toml");
 
-        if (!new File(sData, "game/extracted/fs/1ST_READ.BIN").isFile()) {
-            extractBundledData();
-        } else {
-            showLauncher();
-        }
+        // Show the launcher immediately. The user must be able to choose an image before the
+        // first game-data extraction; extraction is started only when Launch Game is pressed.
+        showLauncher();
     }
 
     @Override
@@ -210,14 +208,12 @@ public class MainActivity extends Activity {
     private void refreshStatus() {
         if (status == null || play == null) return;
         File disc = findDisc();
-        if (!new File(sData, "game/extracted/fs/1ST_READ.BIN").isFile()) {
-            status.setText("Game data has not been extracted.");
-            play.setEnabled(false);
-            return;
-        }
         if (disc == null) {
             status.setText("No game image selected.\nSelect your game image to continue.");
             play.setEnabled(false);
+        } else if (!new File(sData, "game/extracted/fs/1ST_READ.BIN").isFile()) {
+            status.setText("Game image: " + disc.getName() + "\nReady to prepare on launch.");
+            play.setEnabled(true);
         } else {
             status.setText("Game image: " + disc.getName() + "\nReady to play.");
             play.setEnabled(true);
@@ -228,6 +224,10 @@ public class MainActivity extends Activity {
         File disc = findDisc();
         if (disc == null) {
             pickChd();
+            return;
+        }
+        if (!new File(sData, "game/extracted/fs/1ST_READ.BIN").isFile()) {
+            if (!extracting) extractBundledData();
             return;
         }
         sDisc = disc;
