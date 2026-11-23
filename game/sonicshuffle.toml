@@ -1,0 +1,435 @@
+# Sonic Shuffle (USA), MK-51060 V1.000 -- measured on the owner's CHD.
+
+[game]
+id = "sonicshuffle"
+title = "Sonic Shuffle"
+region = "USA"
+product = "MK-51060"
+
+[disc]
+sha1_1st_read = "1a3b3633ac9f54168246f14828621b14ceceb2c0"
+
+[binary]
+path = "extracted/fs/1ST_READ.BIN"
+load_address = 0x8C010000
+link_address = 0x0C010000
+entry = 0x8C010000
+
+# Observed at runtime: BIOS exception and interrupt handlers copied from the boot image.
+[[relocations]]
+source = 0x0C030A74
+size = 0x34
+dest = 0x8C000000
+entry = 0x8C000000
+
+[[relocations]]
+source = 0x0C030A18
+size = 0x58
+dest = 0x8C000600
+entry = 0x8C000600
+no_fold = true
+
+# Overlays read from their own files on the disc. Measured: dumping RAM after the board loads and
+# searching for each SUBPROG file's first bytes found TRAP.BIN at 0x8C500000 and MAPSTART.BIN at
+# 0x8C600000. `overlay` because the same address holds different modules at different times, so the
+# dispatch checks the bytes before using a translation.
+# 0x8C500000 is a shared overlay slot: TITLE.BIN is there during boot, TRAP.BIN later. Both are
+# translated for that address and the runtime dispatches on the code words in RAM.
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/TITLE.BIN"
+dest = 0x8C500000
+overlay = true
+# The overlay's first word is a pointer to 0x8C500214, and a call from 0x0C09400E reaches it at
+# frame 119 of the boot scenario. Discovery did not follow the header pointer.
+# 0x0C500020 is the debug-row name getter (it copies the nine-entry name table and indexes it by
+# the player's character id). Seed it so the ninth-id override can hook it.
+entries = [0x0C500214, 0x0C500020]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/TRAP.BIN"
+dest = 0x8C500000
+overlay = true
+# Entry points the run reached that discovery inside the overlay did not find.
+entries = [0x0C500020, 0x0C500024, 0x0C50002C, 0x0C500046, 0x0C500064, 0x0C50006E,
+             0x0C5000F0, 0x0C5000F4, 0x0C500100, 0x0C500130, 0x0C5001B4, 0x0C5001C0,
+             0x0C50020A, 0x0C500214, 0x0C5002C4, 0x0C5002DE, 0x0C5005F6, 0x0C500610,
+             0x0C500616, 0x0C50063A, 0x0C500662, 0x0C500676, 0x0C5007CC, 0x0C500838,
+             0x0C50308C, 0x0C50320E, 0x0C50336C, 0x0C503418, 0x0C503A80, 0x0C503B70,
+             0x0C503C8A, 0x0C503DE0, 0x0C504374, 0x0C504526, 0x0C50456C, 0x0C5045B8,
+             0x0C504616, 0x0C504690, 0x0C5047F0, 0x0C5048B0, 0x0C5048FE, 0x0C50492A,
+             0x0C50494C, 0x0C504956, 0x0C5049E2, 0x0C504A36, 0x0C504C42, 0x0C504C66,
+             0x0C504C9A, 0x0C504D30, 0x0C505158, 0x0C5052C4, 0x0C505314, 0x0C50557E,
+             0x0C505A26, 0x0C505A3C, 0x0C505A60, 0x0C505A82]
+# A VBlank saved a task context at this instruction (the jsr itself, not a call return); 2060
+# resumes in the mash-A board run. It is inside a translated TRAP function, so split the block
+# there instead of seeding it as a function entry.
+resume = [0x0C505A5A]
+
+# The opening movie loads MOVIE.BIN into the same slot (936 bytes). A call at frame 621 reaches
+# 0x8C500024, which is the entry its first word points to.
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MOVIE.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500024]
+
+# Two more modules in the shared slot, identified from the first word of the slot while the
+# untranslated-call trace ran: START.BIN (0x8C500020) around frame 11000 and ONES.BIN
+# (0x8C500838) shortly after. Only their real entry points are seeded here; call-return addresses
+# inside them (0x1B4, 0x610, 0x616, ...) are resume points, not function entries.
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/START.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500020]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/ONES.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500838]
+
+# VS mode overlays. START SELECT loads DUEL/BATTLE into the shared 0x8C500000 slot; keep them
+# separate from TITLE/TRAP so their character-selection code can be translated and patched without
+# changing the development menu or the original eight-character data.
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/DUEL.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50159E]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/BATTLE.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C503472, 0x0C506210]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MAPSTART.BIN"
+dest = 0x8C600000
+overlay = true
+
+# Minigames, loaded by the TITLE development menu into the 0x8C500000 slot. Each file's first word is
+# the entry the loader calls; discovery follows calls from there. These three are the first batch:
+# GENERAL 17 (MG030), SPECIAL 4 (SMG32), CLEAR 1 (CMG11).
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG030.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50005C, 0x0C502242, 0x0C500D58]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG32.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5005A2]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/CMG11.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000F4]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG001.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500076]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG002.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000F0]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG003.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50005C, 0x0C502252]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG004.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C501712]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG005.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000B6]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG006.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000A8]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG007.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500400]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG009.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500068, 0x0C5003FA]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG010.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5001F4]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG011.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500168]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG012.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500174]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG013.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C501CC6]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG019.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5017C2]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG023.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500072]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG024.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500B9E]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG029.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500056]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG032.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5001C8]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG033.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500072, 0x0C500296]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG034.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5001DC]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG035.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5006E6]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG039.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50005C, 0x0C500D46]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG040.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500098]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG042.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50005C]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG043.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000D6]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG044.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500068]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG045.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C530D12, 0x0C505D62, 0x0C505DE0]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG046.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5009E2]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG049.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C502066]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG051.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500068, 0x0C5003FA, 0x0C500418]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG052.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50005C, 0x0C5027E6, 0x0C500D58]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG060.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500072, 0x0C5019F6]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG101.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000C8]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG102.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500150]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/MG103.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500098]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG21.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000CA]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG22.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000BA]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG31.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5001A6]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG51.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5002E0]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG52.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000CA]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG71.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000D0]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG72.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5001B4]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/SMG81.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500168]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/CMG21.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50005E]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/CMG31.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C5000D0]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/CMG51.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C500090]
+
+[[relocations]]
+file = "../extracted/disc/fs/SUBPROG/CMG71.BIN"
+dest = 0x8C500000
+overlay = true
+entries = [0x0C50124C]
+
+[hooks]
+0x0C08D618 = "glyphadvance"
+0x0C08DCCC = "glyphcache"
+0x0C08DE14 = "glyphmap"
+0x0C08486E = "char_data_load@entry"
+0x0C096A6E = "char_available@entry"
+0x0C0A625C = "sprite_create@entry"
+0x0C0A8460 = "roster_resource@entry"
+0x0C0A7CAC = "sprite_pattern@entry"
+
+
+[functions]
+pointers = true
+sweep = true
+# 0x0C10233C follows fn_0C1022F0 exactly and starts with a `mov.l r14,-@r15` prologue, but only
+# indirect calls reach it: the game enters it mid-intro (656k calls in 20k frames) and until it was
+# seeded everything there ran in the interpreter at ~50x cost, which is the black screen after the
+# intro. The other three are call targets the run reached but discovery never found (the launcher
+# prints them with --suggest-config).
+extra = [0x0C10233C, 0x0C0BDC46, 0x0C0BEB02, 0x0C0DECC4, 0x0C0DECB2, 0x0C0AE264, 0x0C0BE80E,
+        0x0C0CFBB6, 0x0C0CFBDE, 0x0C0CFBEE, 0x0C0CFC24, 0x0C0BD0A0, 0x0C08EAF4, 0x0C096A6E,
+        0x0C0A324C, 0x0C0A32CE, 0x0C0CE70E, 0x0C0CE858, 0x0C0CE8AA, 0x0C0CE8BC, 0x0C0CFC0E,
+        0x0C084F9C, 0x0C0BE70C, 0x0C0A71E4, 0x0C0A2D1A, 0x0C0CA12E, 0x0C0CA158, 0x0C0CA172,
+        0x0C091572, 0x0C09BD32, 0x0C0A0D10, 0x0C0A0D46, 0x0C0A0D58, 0x0C0A0DB6, 0x0C0A4EB4,
+        0x0C0A9872, 0x0C099AF2, 0x0C099B08, 0x0C090BA6, 0x0C0D851A, 0x0C0D9606, 0x0C0D960C,
+        0x0C0D0B38, 0x0C090F2A, 0x0C0A0D84, 0x0C0BCC54, 0x0C0C761C, 0x0C0C76DC, 0x0C0D0514,
+         0x0C0D081C, 0x0C0D0884, 0x0C0D4AD0, 0x0C0D84BC, 0x0C0D8928, 0x0C0D9612]

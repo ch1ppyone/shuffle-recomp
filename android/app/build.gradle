@@ -1,0 +1,105 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Paths are the same desktop tree, not a copy of it: the Android build compiles the engine, the
+// port sources and the generated game C for arm64-v8a. Override any path with the environment
+// variables used by android/scripts/build_android.sh.
+def rootDir = new File(projectDir, '../..').canonicalPath
+def sdl3Root = System.getenv('SDL3_ANDROID_ROOT') ?: new File(rootDir, '.dreamcomp/android-deps/sdl3').canonicalPath
+def hostTranslate = System.getenv('DREAM_TRANSLATE_TOOL') ?: new File(rootDir, 'build-host/dreamcomp/engine/translator/dream-translate').canonicalPath
+def sdkDir = System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT') ?: "${System.getProperty('user.home')}/Library/Android/sdk"
+def ndkDir = System.getenv('ANDROID_NDK_HOME') ?: new File(sdkDir, 'ndk/28.2.13676358').canonicalPath
+def ndkPrebuilt = new File(ndkDir, 'toolchains/llvm/prebuilt').listFiles().find { it.isDirectory() }
+def vulkanLib = new File(ndkPrebuilt, 'sysroot/usr/lib/aarch64-linux-android/26/libvulkan.so')
+
+android {
+    namespace 'dev.ch1ppy.sonicshuffle'
+    compileSdk 35
+    ndkVersion '28.2.13676358'
+
+    defaultConfig {
+        applicationId 'dev.ch1ppy.sonicshuffle'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_static',
+                        '-DANDROID_PLATFORM=android-26',
+                        '-DCMAKE_BUILD_TYPE=Release',
+                        '-DDREAM_RENDERER=ON',
+                        '-DDREAMCOMP_FRONTEND=OFF',
+                        '-DDREAM_BUILD_TESTS=OFF',
+                        '-DDREAM_WERROR=OFF',
+                        '-DDREAM_GAME_OPT_FLAG=-O2',
+                        "-DSDL3_DIR=${sdl3Root}/lib/cmake/SDL3",
+                        "-DDREAM_TRANSLATE_TOOL=${hostTranslate}",
+                        "-DVulkan_INCLUDE_DIR=${ndkPrebuilt}/sysroot/usr/include",
+                        "-DVulkan_LIBRARY=${vulkanLib}"
+                abiFilters 'arm64-v8a'
+            }
+        }
+    }
+
+    sourceSets.main {
+        // SDL3 for Android is copied into this generated directory by copySdl3JniLib. The Java
+        // half of SDLActivity lives in app/src/main/java/org/libsdl/app.
+        jniLibs.srcDirs = ["${buildDir}/generated/sdl3JniLibs"]
+    }
+
+    externalNativeBuild {
+        cmake {
+            // The port's ordinary top-level build: the Android target there is libmain.so.
+            path '../../CMakeLists.txt'
+            version '3.31.6'
+        }
+    }
+
+    packaging {
+        // SDLActivity loads libmain.so/libSDL3.so through an absolute path from nativeLibraryDir,
+        // so keep the libraries extracted rather than mapped from the APK.
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError = false
+    }
+}
+
+// SDLActivity loads libSDL3.so before libmain.so; every APK must package it. A plain Gradle build
+// would otherwise succeed without it and fail at launch with "libSDL3.so not found".
+def copySdl3 = tasks.register('copySdl3JniLib', Copy) {
+    def sdl3Lib = file("${sdl3Root}/lib/libSDL3.so")
+    doFirst {
+        if (!sdl3Lib.isFile()) {
+            throw new GradleException("libSDL3.so not found at ${sdl3Lib}. Run android/scripts/build_sdl3_android.sh or set SDL3_ANDROID_ROOT.")
+        }
+    }
+    from sdl3Lib
+    into "${buildDir}/generated/sdl3JniLibs/arm64-v8a"
+}
+tasks.named('preBuild') { dependsOn copySdl3 }
