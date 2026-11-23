@@ -84,9 +84,13 @@ final class TouchOverlay extends View {
         padY = h - padRadius * 1.5f - 16f * density;
 
         faceR = unit * 0.050f;
-        faceGap = faceR * 1.22f;
-        faceCx = w - faceR * 3.4f - 16f * density;
-        faceCy = h - faceR * 2.5f - 16f * density;
+        // Keep a visible gap between the face buttons. A gap below 2R makes the circles
+        // overlap and the A/B/X/Y cluster reads as one blob on a phone screen.
+        faceGap = faceR * 2.0f;
+        // Anchor the whole diamond by its outer edges. The extra bottom margin lifts the
+        // cluster above the gesture bar instead of spreading it across the lower corner.
+        faceCx = w - faceGap - faceR - 24f * density;
+        faceCy = h - faceGap - faceR - 48f * density;
 
         // START sits above the D-pad, not in the middle of the screen.
         startW = unit * 0.105f;

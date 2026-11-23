@@ -14,11 +14,9 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,7 +58,6 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private TextView status;
     private Button play;
-    private Spinner scaleChooser;
     private boolean extracting;
 
     @Override
@@ -68,7 +65,9 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        sScale = prefs.getInt("scale", 1) == 2 ? 2 : 1;
+        // Android uses the stable default render scale. The launcher intentionally has no
+        // performance or graphics settings: select the game once, then play.
+        sScale = 1;
 
         sBase = getExternalFilesDir(null);
         if (sBase == null) sBase = getFilesDir();
@@ -167,7 +166,7 @@ public class MainActivity extends Activity {
         root.addView(title);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Android arm64 · SDL3 · Vulkan");
+        subtitle.setText("Recompiled native port");
         subtitle.setTextColor(Color.rgb(150, 190, 255));
         subtitle.setTextSize(13);
         root.addView(subtitle);
@@ -182,36 +181,22 @@ public class MainActivity extends Activity {
         play.setText("Launch Game");
         play.setTextSize(18);
         play.setOnClickListener(v -> startGame());
-        root.addView(play);
-
-        TextView scaleLabel = new TextView(this);
-        scaleLabel.setText("Render Resolution");
-        scaleLabel.setTextColor(Color.rgb(180, 200, 230));
-        scaleLabel.setTextSize(13);
-        scaleLabel.setPadding(0, dp(10), 0, 0);
-        root.addView(scaleLabel);
-
-        scaleChooser = new Spinner(this);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"Performance — 640×480 (1x)",
-                        "Quality — 1280×960 (2x, heavier)"});
-        scaleChooser.setAdapter(adapter);
-        scaleChooser.setSelection(sScale == 2 ? 1 : 0);
-        root.addView(scaleChooser);
+        LinearLayout.LayoutParams playParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        playParams.bottomMargin = dp(18);
+        root.addView(play, playParams);
 
         Button pick = new Button(this);
-        pick.setText("Select Disc Image (CHD)");
+        pick.setText("Select Game Image");
         pick.setOnClickListener(v -> pickChd());
         LinearLayout.LayoutParams pickParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        pickParams.topMargin = dp(14);
+        pickParams.topMargin = dp(18);
         root.addView(pick, pickParams);
 
         TextView hint = new TextView(this);
-        hint.setText("You can also place a CHD here:\n" + isoDir.getAbsolutePath()
-                + "\n\nSaves: " + new File(savesDir, "sonicshuffle.vmu").getAbsolutePath()
-                + "\nLog: " + new File(sBase, "sonicshuffle.log").getAbsolutePath());
+        hint.setText("Your selected game image is kept on this device.\n"
+                + "You only need to select it once.");
         hint.setTextColor(Color.rgb(130, 150, 180));
         hint.setTextSize(11);
         hint.setPadding(0, dp(18), 0, 0);
@@ -231,11 +216,10 @@ public class MainActivity extends Activity {
             return;
         }
         if (disc == null) {
-            status.setText("Disc image not found.\nPlace a CHD in: " + isoDir.getAbsolutePath()
-                    + "\nor select a disc image.");
+            status.setText("No game image selected.\nSelect your game image to continue.");
             play.setEnabled(false);
         } else {
-            status.setText("Disc image: " + disc.getName() + "\n" + disc.getAbsolutePath());
+            status.setText("Game image: " + disc.getName() + "\nReady to play.");
             play.setEnabled(true);
         }
     }
@@ -248,8 +232,7 @@ public class MainActivity extends Activity {
         }
         sDisc = disc;
         sVmu = new File(savesDir, "sonicshuffle.vmu");
-        sScale = scaleChooser != null && scaleChooser.getSelectedItemPosition() == 1 ? 2 : 1;
-        prefs.edit().putInt("scale", sScale).apply();
+        sScale = 1;
         startActivity(new Intent(this, GameActivity.class));
     }
 
@@ -300,6 +283,16 @@ public class MainActivity extends Activity {
             try (InputStream in = getContentResolver().openInputStream(uri);
                  FileOutputStream out = new FileOutputStream(finalTarget)) {
                 if (in == null) throw new IOException("cannot open " + uri);
+                File[] existing = isoDir.listFiles();
+                if (existing != null) {
+                    for (File old : existing) {
+                        if (!old.equals(finalTarget) && old.isFile()) {
+                            // Keep one selected image so the next launch is unambiguous.
+                            //noinspection ResultOfMethodCallIgnored
+                            old.delete();
+                        }
+                    }
+                }
                 byte[] buffer = new byte[1 << 20];
                 long total = 0;
                 int n;
@@ -320,6 +313,7 @@ public class MainActivity extends Activity {
                 if (message != null) {
                     Toast.makeText(this, "Could not copy: " + message, Toast.LENGTH_LONG).show();
                 } else {
+                    prefs.edit().putString("disc_name", finalTarget.getName()).apply();
                     refreshStatus();
                 }
             });

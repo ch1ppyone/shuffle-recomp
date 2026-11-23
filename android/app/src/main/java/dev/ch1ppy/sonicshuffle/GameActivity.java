@@ -62,7 +62,9 @@ public class GameActivity extends SDLActivity {
 
     private void hideSystemBars() {
         if (Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController c = getWindow().getInsetsController();
+            // getWindow().getInsetsController() can crash before the decor view exists on
+            // Android 16. getDecorView() installs it first, so the controller is always valid.
+            WindowInsetsController c = getWindow().getDecorView().getWindowInsetsController();
             if (c != null) {
                 c.hide(WindowInsets.Type.systemBars());
                 c.setSystemBarsBehavior(

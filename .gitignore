@@ -38,3 +38,6 @@ android/local.properties
 *.pyc
 __pycache__/
 .DS_Store
+.deps/
+dist-macos/
+.venv-macos/
