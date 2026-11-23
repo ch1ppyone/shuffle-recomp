@@ -194,8 +194,8 @@ public class MainActivity extends Activity {
         scaleChooser = new Spinner(this);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"Производительность — 640×480 (1x)",
-                        "Качество — 1280×960 (2x, тяжелее)"});
+                new String[]{"Performance — 640×480 (1x)",
+                        "Quality — 1280×960 (2x, heavier)"});
         scaleChooser.setAdapter(adapter);
         scaleChooser.setSelection(sScale == 2 ? 1 : 0);
         root.addView(scaleChooser);
