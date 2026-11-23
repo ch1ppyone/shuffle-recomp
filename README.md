@@ -35,15 +35,57 @@ layout. Saves and settings are stored locally on each device.
 
 ### Launcher
 
-| macOS / Windows | Android |
-| --- | --- |
-| [![Desktop launcher](docs/images/launcher-desktop.png)](docs/images/launcher-desktop.png) | [![Android launcher](docs/images/launcher-android.png)](docs/images/launcher-android.png) |
+<table>
+  <thead>
+    <tr>
+      <th align="center">macOS / Windows</th>
+      <th align="center">Android</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">
+        <a href="docs/images/launcher-desktop.png">
+          <img src="docs/images/launcher-desktop.png" alt="macOS and Windows launcher" width="520">
+        </a>
+        <br><strong>Desktop launcher</strong>
+      </td>
+      <td align="center">
+        <a href="docs/images/launcher-android.png">
+          <img src="docs/images/launcher-android.png" alt="Android launcher" width="320">
+        </a>
+        <br><strong>Android launcher</strong>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ### In game
 
-| macOS / Windows | Android |
-| --- | --- |
-| [![Desktop game](docs/images/game-desktop.png)](docs/images/game-desktop.png) | [![Android game](docs/images/game-android.png)](docs/images/game-android.png) |
+<table>
+  <thead>
+    <tr>
+      <th align="center">macOS / Windows</th>
+      <th align="center">Android</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">
+        <a href="docs/images/game-desktop.png">
+          <img src="docs/images/game-desktop.png" alt="macOS and Windows gameplay" width="520">
+        </a>
+        <br><strong>Desktop gameplay</strong>
+      </td>
+      <td align="center">
+        <a href="docs/images/game-android.png">
+          <img src="docs/images/game-android.png" alt="Android gameplay" width="320">
+        </a>
+        <br><strong>Android gameplay</strong>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 The desktop screenshots represent the shared macOS and Windows launcher and game experience.
 Android screenshots were supplied from the tested Android build.
