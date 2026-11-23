@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.util.Locale;
 
 /**
@@ -101,7 +103,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             String error = null;
             try {
-                copyAssetTree("data", sData);
+                extractBundledFiles();
             } catch (IOException e) {
                 Log.e(TAG, "asset extraction failed", e);
                 error = e.getMessage();
@@ -123,24 +125,26 @@ public class MainActivity extends Activity {
         }, "extract-assets").start();
     }
 
-    private void copyAssetTree(String assetPath, File target) throws IOException {
-        String[] children = getAssets().list(assetPath);
-        if (children == null || children.length == 0) {
-            File parent = target.getParentFile();
-            if (parent != null) //noinspection ResultOfMethodCallIgnored
-                parent.mkdirs();
-            try (InputStream in = getAssets().open(assetPath);
-                 FileOutputStream out = new FileOutputStream(target)) {
-                byte[] buffer = new byte[1 << 16];
-                int n;
-                while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
+    private void extractBundledFiles() throws IOException {
+        try (BufferedReader manifest = new BufferedReader(new InputStreamReader(
+                getAssets().open("data-manifest.txt")))) {
+            String relativePath;
+            while ((relativePath = manifest.readLine()) != null) {
+                if (relativePath.isEmpty()) continue;
+                copyAssetFile("data/" + relativePath, new File(sData, relativePath));
             }
-            return;
         }
-        //noinspection ResultOfMethodCallIgnored
-        target.mkdirs();
-        for (String child : children) {
-            copyAssetTree(assetPath + "/" + child, new File(target, child));
+    }
+
+    private void copyAssetFile(String assetPath, File target) throws IOException {
+        File parent = target.getParentFile();
+        if (parent != null) //noinspection ResultOfMethodCallIgnored
+            parent.mkdirs();
+        try (InputStream in = getAssets().open(assetPath);
+             FileOutputStream out = new FileOutputStream(target)) {
+            byte[] buffer = new byte[1 << 16];
+            int n;
+            while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
         }
     }
 

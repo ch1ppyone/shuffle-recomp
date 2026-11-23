@@ -42,8 +42,17 @@ cp "$REPO/game/sonicshuffle.toml" "$ASSETS/game/"
 cp "$REPO/game/extracted/fs/1ST_READ.BIN" "$ASSETS/game/extracted/fs/"
 cp "$REPO"/extracted/disc/fs/SUBPROG/*.BIN "$ASSETS/extracted/disc/fs/SUBPROG/"
 printf 'Prepared by android/scripts/build_android.sh from the desktop tree.\n' > "$ASSETS/README.txt"
+find "$ASSETS" -type f -print \
+  | sed "s#^$ASSETS/##" \
+  | sort > "$ANDROID_ROOT/app/src/main/assets/data-manifest.txt"
 
 printf 'sdk.dir=%s\n' "$ANDROID_SDK" > "$ANDROID_ROOT/local.properties"
+
+# Android Gradle Plugin can reuse a native CMake cache created by an earlier renderer-off build.
+# That produces a valid APK whose game exits at runtime with "this build has no renderer" even
+# though build.gradle requests DREAM_RENDERER=ON. Remove only generated native state so the
+# renderer choice is configured again for every release build.
+rm -rf "$ANDROID_ROOT/app/.cxx"
 
 cd "$ANDROID_ROOT"
 ./gradlew :app:assembleDebug --console=plain
