@@ -65,21 +65,28 @@ layout. Saves and settings are stored locally on each device.
 <table>
   <thead>
     <tr>
-      <th align="center">macOS / Windows</th>
+      <th align="center">macOS</th>
+      <th align="center">Windows</th>
       <th align="center">Android</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="center">
-        <a href="docs/images/game-desktop.png">
-          <img src="docs/images/game-desktop.png" alt="macOS and Windows gameplay" width="520">
+        <a href="docs/images/game-macos.png">
+          <img src="docs/images/game-macos.png" alt="macOS gameplay" width="360">
         </a>
-        <br><strong>Desktop gameplay</strong>
+        <br><strong>macOS gameplay</strong>
+      </td>
+      <td align="center">
+        <a href="docs/images/game-windows.png">
+          <img src="docs/images/game-windows.png" alt="Windows gameplay" width="360">
+        </a>
+        <br><strong>Windows gameplay</strong>
       </td>
       <td align="center">
         <a href="docs/images/game-android.png">
-          <img src="docs/images/game-android.png" alt="Android gameplay" width="320">
+          <img src="docs/images/game-android.png" alt="Android gameplay" width="360">
         </a>
         <br><strong>Android gameplay</strong>
       </td>
@@ -87,8 +94,7 @@ layout. Saves and settings are stored locally on each device.
   </tbody>
 </table>
 
-The desktop screenshots represent the shared macOS and Windows launcher and game experience.
-Android screenshots were supplied from the tested Android build.
+The macOS, Windows and Android screenshots come from the tested platform builds.
 
 ## What you need
 
